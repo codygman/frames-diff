@@ -1,0 +1,34 @@
+name:                frames-diff
+version:             0.1.0.0
+synopsis:            Useful library to compare to producers using structural typing and lenses
+description:         Please see README.md
+homepage:            https://github.com/codygman/frames-diff#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Author name here
+maintainer:          example@example.com
+copyright:           2016 Cody Goodman
+category:            Web
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      .
+  exposed-modules:     Frames.Diff
+  build-depends:       base >= 4.7 && < 5
+                     , containers
+                     , foldl
+                     , lens
+                     , mtl >= 2.2.1
+                     , pipes
+                     , text
+                     , text-format
+                     , vinyl
+                     , Frames
+
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/githubuser/frames-diff
