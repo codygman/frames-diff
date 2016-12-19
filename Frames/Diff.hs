@@ -24,8 +24,9 @@ import Data.Maybe (fromMaybe)
 import Control.Lens.Getter(Getting)
 import qualified Pipes.Prelude as P
 import qualified Data.Text.Lazy as LT
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Text.Format as T
+import Data.Int (Int8)
 
 -- An en passant Default class
 class Default a where
@@ -73,5 +74,5 @@ findMissingRowsOn :: forall (checkRec :: [*]) (outRec :: [*])  (monad :: * -> *)
                   -> Producer (Record checkRec) monad ()     -- checkProducer
                   -> monad (Pipe (Record outRec) (Record outRec) monad ())
 findMissingRowsOn lens1 lens2 checkProducer = do
-  keyMap <- P.fold (\m r -> M.insert (view lens1 (r :: Record checkRec)) 0 m) M.empty id checkProducer
+  keyMap <- P.fold (\m r -> M.insert (view lens1 (r :: Record checkRec)) (0 :: Int8) m) M.empty id checkProducer
   pure $ P.filter (\(r :: Record rec2) -> M.notMember (view lens2 (r :: Record outRec))  keyMap)
