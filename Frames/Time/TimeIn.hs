@@ -4,7 +4,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 -- | Define the 'TimeIn' type that lets us specify in the type how a
 -- 'LocalTime' should be converted to a 'UTCTime'.
-module Frames.TimeIn.TimeIn where
+module Frames.Time.TimeIn where
 import Control.Monad (MonadPlus, msum)
 import qualified Data.Text as T
 import Data.Time.Clock
