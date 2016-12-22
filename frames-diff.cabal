@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      .
-  exposed-modules:     Frames.Diff, Frames.Time.TimeIn
+  exposed-modules:     Frames.Diff, Frames.Time.TimeIn, Frames.Time.Columns
   build-depends:       Frames
                      , base >= 4.7 && < 5
                      , containers
