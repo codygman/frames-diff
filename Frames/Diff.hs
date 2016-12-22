@@ -10,7 +10,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Frames.Diff (defaultingProducer, findMissingRowsOn) where
+module Frames.Diff (defaultingProducer, findMissingRowsOn, Default(..)) where
 
 import Frames hiding ((:&))
 import Frames.CSV (RowGen(..), ReadRec)
