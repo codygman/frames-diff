@@ -18,12 +18,14 @@ module Frames.Time.Columns (
   , rowGen
   , chicagoToZonedTime
   , zonedTimeToChicago
+  , addSecondsChicago
   ) where
 import Frames (CommonColumns)
 import Frames.CSV (colQ,columnUniverse,rowGen)
 import Frames.ColumnTypeable (Parseable(..))
 import Frames.Time.TimeIn
 import Data.Time
+import Data.Time.Clock
 import Data.Time.Zones
 import Data.Time.Zones.TH
 
@@ -55,3 +57,9 @@ zonedTimeToChicago :: ZonedTime -> Chicago
 zonedTimeToChicago zt = do
   let utcTm = zonedTimeToUTC zt
   Chicago (TimeIn utcTm)
+
+addSecondsChicago :: NominalDiffTime -> Chicago -> Chicago
+addSecondsChicago seconds (Chicago timeIn) = go timeIn
+  where go (TimeIn utcTm) = Chicago (TimeIn ((addUTCTime seconds utcTm) :: UTCTime))
+
+-- λ> :t \r -> set birthday (chicagoToZonedTime (view birthday r))
