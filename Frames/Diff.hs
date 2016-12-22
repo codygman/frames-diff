@@ -27,6 +27,10 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Map.Strict as M
 import qualified Data.Text.Format as T
 import Data.Int (Int8)
+import Frames.Time.Columns
+import Frames.Time.TimeIn
+import Data.Time
+import Data.String (IsString(..))
 
 -- An en passant Default class
 class Default a where
@@ -36,6 +40,9 @@ instance Default (s :-> Int) where def = Col 0
 instance Default (s :-> Text) where def = Col mempty
 instance Default (s :-> Double) where def = Col 0.0
 instance Default (s :-> Bool) where def = Col False
+
+instance Default (s :-> Chicago) where def = Col (Chicago (TimeIn "America/Chicago"))
+instance (IsString UTCTime) where fromString = isStringUtcTime
 
 -- We can write instances for /all/ 'Rec' values.
 instance (Applicative f, LAll Default ts, RecApplicative ts)

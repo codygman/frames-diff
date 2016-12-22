@@ -8,8 +8,9 @@
 -- | Define the column types used to represent our data. Here, we wish
 -- to parse data captured as 'Data.Time.LocalTime.LocalTime' values
 -- into the \"America/Chicago\" time zone.
-module Frames.Time.Columns (MyColumns, TimeIn(..), Chicago(..)) where
+module Frames.Time.Columns (MyColumns, TimeIn(..), Chicago(..), colQ,columnUniverse, rowGen) where
 import Frames (CommonColumns)
+import Frames.CSV (colQ,columnUniverse,rowGen)
 import Frames.ColumnTypeable (Parseable(..))
 import Frames.Time.TimeIn
 
