@@ -76,3 +76,27 @@ findMissingRowsOn :: forall (checkRec :: [*]) (outRec :: [*])  (monad :: * -> *)
 findMissingRowsOn lens1 lens2 checkProducer = do
   keyMap <- P.fold (\m r -> M.insert (view lens1 (r :: Record checkRec)) (0 :: Int8) m) M.empty id checkProducer
   pure $ P.filter (\(r :: Record rec2) -> M.notMember (view lens2 (r :: Record outRec))  keyMap)
+
+
+-- normalized >-> distinctOn DateCol
+
+-- distinctOn :: forall (checkRec :: [*]) (outRec :: [*]) (keysRec :: [*]) (monad :: * -> *) (key :: *).
+--                      ( Monad monad
+--                      , Ord key
+--                      , Show key
+--                      ) =>
+--                      Getting key (Rec Identity checkRec) key -- lens
+--                   -> Producer (Record checkRec) monad ()     -- checkProducer
+--                   -> monad (Pipe (Record keysRec) (Record keysRec) monad ())
+-- distinctOn lens1 checkProducer = do
+--     distinctValuesMap <- P.fold (\m r -> M.insert (view lens1 (r :: Record checkRec)) (0 :: Int8) m) M.empty id checkProducer
+--     pure $ _ (head  $ M.keys distinctValuesMap)
+  -- distinctValues are above.. two options:
+  -- need to create a record with those distinctValues
+  -- undefined
+  -- pure $ P.filter (\(r :: Record rec2) -> M.notMember (view lens2 (r :: Record outRec))  keyMap)
+  -- M.keys keyMap
+
+-- idea for implementing joinOn
+-- [23:31] <Cale> codygman: Perhaps ListT will do what you want
+-- [23:32] <Cale> codygman: You could write something like  enumerate $ liftM2 (,) (Select producer1) (Select producer2)  to get a full join
