@@ -16,8 +16,8 @@ module Frames.Time.Columns (
   , colQ
   , columnUniverse
   , rowGen
-  , chicagoToZonedTime
-  , zonedTimeToChicago
+  -- , chicagoToZonedTime
+  -- , zonedTimeToChicago
   , addSecondsChicago
   ) where
 import Frames (CommonColumns)
@@ -47,19 +47,22 @@ tzChicago :: TZ
 tzChicago = $(includeTZFromDB "America/Chicago")
 
 
-chicagoToZonedTime :: Chicago -> ZonedTime
-chicagoToZonedTime (Chicago timeIn) = go timeIn
-  where go (TimeIn utcTm) = do
-          let tz = timeZoneForUTCTime tzChicago utcTm
-          utcToZonedTime tz utcTm
+-- chicagoToZonedTime :: Chicago -> ZonedTime
+-- chicagoToZonedTime (Chicago timeIn) = go timeIn
+--   where go (TimeIn utcTm) = do
+--           let tz = timeZoneForUTCTime tzChicago utcTm
+--           utcToZonedTime tz utcTm
 
-zonedTimeToChicago :: ZonedTime -> Chicago
-zonedTimeToChicago zt = do
-  let utcTm = zonedTimeToUTC zt
-  Chicago (TimeIn utcTm)
+-- zonedTimeToChicago :: ZonedTime -> Chicago
+-- zonedTimeToChicago zt = do
+--   let utcTm = zonedTimeToUTC zt
+--   Chicago (TimeIn utcTm)
 
 addSecondsChicago :: NominalDiffTime -> Chicago -> Chicago
 addSecondsChicago seconds (Chicago timeIn) = go timeIn
-  where go (TimeIn utcTm) = Chicago (TimeIn ((addUTCTime seconds utcTm) :: UTCTime))
+  where go (TimeIn zndTm) = Chicago (TimeIn zndTm')
+          where utcTm = zonedTimeToUTC (zndTm :: ZonedTime) :: UTCTime
+                tmZn = zonedTimeZone zndTm
+                zndTm' = utcToZonedTime tmZn (addUTCTime seconds utcTm) :: ZonedTime
 
 -- λ> :t \r -> set birthday (chicagoToZonedTime (view birthday r))
