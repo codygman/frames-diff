@@ -128,3 +128,6 @@ timeIn tzStr =
       instanceD (pure [])
         [t| Parseable (TimeIn $(pure $ LitT (StrTyLit tzStr)))|]
         [ funD (mkName "parse") [clause [] (normalB ex) []] ] ]
+
+dateInPast :: Integer -> ZonedTime -> ZonedTime -> Bool
+dateInPast n inDt cmpDt  = (localDay . zonedTimeToLocalTime $ inDt) >= addDays (- n) (localDay . zonedTimeToLocalTime $ cmpDt)
