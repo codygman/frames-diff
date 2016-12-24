@@ -23,21 +23,26 @@ import Data.Maybe (isJust)
 newtype TimeIn (zone :: Symbol) = TimeIn ZonedTime deriving Show
 
 -- | Try to parse a 'LocalTime' value using common formats.
-parseLocalTime :: MonadPlus m => T.Text -> m LocalTime
+parseLocalTime :: MonadPlus m => T.Text -> m ZonedTime
 parseLocalTime t = msum (map (($ T.unpack t) . mkParser) formats)
   where formats = ["%F %T", "%F", "%F %T", "%F %T %z %Z"]
-        mkParser = parseTimeM True defaultTimeLocale
+        mkParser = parseTimeM True defaultTimeLocale -- TODO should I use a different time locale?
 
-isStringUtcTime :: String -> UTCTime
-isStringUtcTime str = case (filter isJust (map ($ str) (map mkParser formats) :: [Maybe UTCTime])) of
-                        (x:_) -> case (x :: Maybe UTCTime) of -- takes the first format matched
+isStringUtcTime = undefined
+  
+isStringZonedTime :: String -> ZonedTime
+isStringZonedTime str = case (filter isJust (map ($ str) (map mkParser formats) :: [Maybe ZonedTime])) of
+                        (x:_) -> case (x :: Maybe ZonedTime) of -- takes the first format matched
                           Just tm -> tm
                           Nothing -> do
                             -- in case of an error provide an obviously wrong date value
-                            UTCTime (fromGregorian 0 0 0) (secondsToDiffTime 0)
+                            ZonedTime (LocalTime (fromGregorian 0 0 0) (TimeOfDay 0 0 0)) tzZero
                         _ -> do
                           -- in case of an error provide an obviously wrong date value
-                            UTCTime (fromGregorian 0 0 0) (secondsToDiffTime 0)
+                            ZonedTime (LocalTime (fromGregorian 0 0 0) (TimeOfDay 0 0 0)) tzZero
+  where utcTmZero = UTCTime (fromGregorian 0 0 0) (secondsToDiffTime 0)
+        tzZero = timeZoneForUTCTime $(includeTZFromDB "America/Chicago") utcTmZero
+
 
 formats = ["%F %T", "%F", "%F %T", "%F %T %z %Z"]
 mkParser = parseTimeM True defaultTimeLocale
