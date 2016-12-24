@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 -- | Define the 'TimeIn' type that lets us specify in the type how a
@@ -23,13 +24,11 @@ import Data.Maybe (isJust)
 newtype TimeIn (zone :: Symbol) = TimeIn ZonedTime deriving Show
 
 -- | Try to parse a 'LocalTime' value using common formats.
-parseLocalTime :: MonadPlus m => T.Text -> m ZonedTime
+parseLocalTime :: MonadPlus m => T.Text -> m LocalTime
 parseLocalTime t = msum (map (($ T.unpack t) . mkParser) formats)
   where formats = ["%F %T", "%F", "%F %T", "%F %T %z %Z"]
         mkParser = parseTimeM True defaultTimeLocale -- TODO should I use a different time locale?
 
-isStringUtcTime = undefined
-  
 isStringZonedTime :: String -> ZonedTime
 isStringZonedTime str = case (filter isJust (map ($ str) (map mkParser formats) :: [Maybe ZonedTime])) of
                         (x:_) -> case (x :: Maybe ZonedTime) of -- takes the first format matched
