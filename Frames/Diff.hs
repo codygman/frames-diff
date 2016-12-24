@@ -42,7 +42,7 @@ instance Default (s :-> Double) where def = Col 0.0
 instance Default (s :-> Bool) where def = Col False
 
 instance Default (s :-> Chicago) where def = Col (Chicago (TimeIn "America/Chicago"))
-instance (IsString UTCTime) where fromString = isStringUtcTime
+instance (IsString ZonedTime) where fromString = isStringZonedTime
 
 -- We can write instances for /all/ 'Rec' values.
 instance (Applicative f, LAll Default ts, RecApplicative ts)
