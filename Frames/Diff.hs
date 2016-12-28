@@ -10,7 +10,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Frames.Diff (defaultingProducer, findMissingRowsOn, Default(..)) where
+module Frames.Diff (defaultingProducer, findMissingRowsOn, Default(..), pastNDays) where
 
 import Frames hiding ((:&))
 import Frames.CSV (RowGen(..), ReadRec)
@@ -85,6 +85,25 @@ findMissingRowsOn lens1 lens2 checkProducer = do
   pure $ P.filter (\(r :: Record rec2) -> M.notMember (view lens2 (r :: Record outRec))  keyMap)
 
 
+pastNDays
+  :: Getting Chicago t Chicago
+  -> Integer
+  -> ZonedTime
+  -> t
+  -> Bool
+pastNDays lens n today row = do
+         let
+           rowDate = (view lens row) :: Chicago
+           diff =  diffDays
+                     (utctDay . zonedTimeToUTC $ today)
+                     (utctDay . chicagoToUTCTime $ rowDate)
+           in diff <= n
+
+        where chicagoToUTCTime :: Chicago -> UTCTime
+              chicagoToUTCTime = (\(Chicago (TimeIn z)) -> zonedTimeToUTC z)
+
+
+
 -- normalized >-> distinctOn DateCol
 
 -- distinctOn :: forall (checkRec :: [*]) (outRec :: [*]) (keysRec :: [*]) (monad :: * -> *) (key :: *).
@@ -107,3 +126,4 @@ findMissingRowsOn lens1 lens2 checkProducer = do
 -- idea for implementing joinOn
 -- [23:31] <Cale> codygman: Perhaps ListT will do what you want
 -- [23:32] <Cale> codygman: You could write something like  enumerate $ liftM2 (,) (Select producer1) (Select producer2)  to get a full join
+
