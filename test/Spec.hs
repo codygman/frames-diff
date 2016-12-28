@@ -18,22 +18,6 @@ csvTests = $(do addDependentFile "test/examples.toml"
                                   [e|(x,$(generateCode "Row" c))|])
                                csvExamples)
 
--- | Detect type-compatible re-used names and do not attempt to
--- re-generate definitions for them. This does not do the right thing
--- since the generated declarations are never turned into actual
--- declarations, they do not affect the `lookupTypeName` call that is
--- designed to prevent duplicate declarations.
-overlappingGeneration :: String
-overlappingGeneration = m ++ "\n\n" ++ e
-  where m = $(do csvExamples <- TH.runIO (examplesFrom "test/examples.toml")
-                 let Just (CsvExample _ managers _) = 
-                       find (\(CsvExample k _ _) -> k == "managers") csvExamples
-                 generateCode "ManagerRec" managers)
-        e = $(do csvExamples <- TH.runIO (examplesFrom "test/examples.toml")
-                 let Just (CsvExample _ employees _) = 
-                       find (\(CsvExample k _ _) -> k == "employees") csvExamples
-                 generateCode "EmployeeRec" employees)
-
 -- | To generate example generated code from raw CSV data, add the csv
 -- to @examples.toml@ and set the @generated@ key to an empty
 -- string. Then load this file into a REPL that has @:set
