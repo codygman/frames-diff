@@ -20,6 +20,7 @@ library
                      , base >= 4.7 && < 5
                      , containers
                      , foldl
+                     , hashable >= 1.2.4.0
                      , lens
                      , mtl >= 2.2.1
                      , pipes
@@ -28,6 +29,7 @@ library
                      , text-format
                      , time >= 1.6.0.1
                      , tz >= 0.1.2.0 && < 0.2.0.0
+                     , unordered-containers >= 0.2.7.1
                      , vinyl
 
   default-language:    Haskell2010

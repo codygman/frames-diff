@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -16,12 +19,14 @@ import Data.Time.Zones
 import Data.Time.Zones.TH
 import Frames.ColumnTypeable (Parseable(..), Parsed(..))
 import GHC.TypeLits
+import Data.Hashable
+import GHC.Generics
 import Language.Haskell.TH
 import Data.Maybe (isJust)
 
 -- | A 'UTCTime' tagged with a symbol denoting the 'TZ' time zone from
 -- whence it came.
-newtype TimeIn (zone :: Symbol) = TimeIn ZonedTime deriving Show
+newtype TimeIn (zone :: Symbol) = TimeIn ZonedTime deriving (Generic, Show)
 
 -- | Try to parse a 'LocalTime' value using common formats.
 parseLocalTime :: MonadPlus m => T.Text -> m LocalTime
@@ -46,6 +51,18 @@ isStringZonedTime str = case (filter isJust (map ($ str) (map mkParser formats) 
 formats = ["%F %T", "%F", "%F %T", "%F %T %z %Z"]
 mkParser = parseTimeM True defaultTimeLocale
 
+deriving instance Generic Day
+deriving instance Hashable Day
+deriving instance Generic TimeOfDay
+deriving instance Hashable TimeOfDay
+deriving instance Generic LocalTime
+deriving instance Hashable LocalTime
+deriving instance Generic TimeZone
+deriving instance Hashable TimeZone
+deriving instance Generic ZonedTime
+deriving instance Eq ZonedTime
+deriving instance Hashable ZonedTime
+deriving instance Hashable (TimeIn (zone :: Symbol))
 
 -- | @zonedTime "America/Chicago"@ will create a 'Parseable' instance
 -- for the type @TimeIn "America/Chicago"@. You can then use this type
