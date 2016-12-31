@@ -17,6 +17,7 @@ import Frames.CSV (RowGen(..), ReadRec)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Vinyl (Rec, RecApplicative(rpure), rmap, rapply)
 import Data.Vinyl.Functor (Lift(..), Identity(..))
+import Data.Vinyl.TypeLevel
 import Control.Lens (view, (&), (?~))
 import Pipes (Pipe,Producer, (>->), runEffect)
 import Data.Monoid ((<>),First(..))
@@ -32,6 +33,9 @@ import Frames.Time.Chicago.TimeIn
 import Data.Time
 import Data.String (IsString(..))
 import qualified Data.HashSet as HS
+import Data.Foldable as F
+import Control.Monad.Primitive (PrimMonad)
+import Frames.InCore (RecVec)
 
 -- An en passant Default class
 class Default a where
@@ -110,3 +114,23 @@ distinctOn lens1 rowProducer = do
     HS.empty -- initial value
     id -- we just want to return the value we inserted, nothing more
     rowProducer -- our rowProducer, in this specific case it is just `rows`
+
+innerJoin
+  :: (RecVec (as ++ bs), PrimMonad m, Ord k) =>
+     Producer (Rec Identity as) m ()
+     -> Getting k (Rec Identity as) k
+     -> Producer (Rec Identity bs) m ()
+     -> Getting k (Rec Identity bs) k
+     -> m (FrameRec (as ++ bs))
+innerJoin leftProducer leftLens rightProducer rightLens = do
+  -- build a Map with values from the left producer
+  leftKeyMap <- P.fold (\m r -> M.insert (view leftLens r) r m) M.empty id leftProducer
+  inCoreAoS (rightProducer
+             >-> P.filter (\r -> M.member (view rightLens r) leftKeyMap)
+             >-> P.map (\row -> do
+                          case M.lookup (view rightLens row) leftKeyMap of
+                            Just leftRow -> do
+                              rappend leftRow row
+                            Nothing -> error "this shouldn't happen"
+                           )
+            )

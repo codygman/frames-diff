@@ -24,6 +24,7 @@ library
                      , lens
                      , mtl >= 2.2.1
                      , pipes
+                     , primitive >= 0.6.1.0
                      , template-haskell >= 2.11.0.0
                      , text
                      , text-format
