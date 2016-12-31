@@ -27,8 +27,8 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Map.Strict as M
 import qualified Data.Text.Format as T
 import Data.Int (Int8)
-import Frames.Time.Columns
-import Frames.Time.TimeIn
+import Frames.Time.Chicago.Columns
+import Frames.Time.Chicago.TimeIn
 import Data.Time
 import Data.String (IsString(..))
 import qualified Data.HashSet as HS
