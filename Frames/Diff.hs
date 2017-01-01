@@ -10,7 +10,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Frames.Diff (defaultingProducer, findMissingRowsOn, Default(..), pastNDays, distinctOn) where
+module Frames.Diff ( defaultingProducer
+                   , findMissingRowsOn
+                   , Default(..)
+                   , pastNDays
+                   , distinctOn
+                   , innerJoin
+                   ) where
 
 import Frames hiding ((:&))
 import Frames.CSV (RowGen(..), ReadRec)
