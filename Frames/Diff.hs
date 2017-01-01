@@ -14,6 +14,7 @@
 module Frames.Diff ( defaultingProducer
                    , findMissingRowsOn
                    , Default(..)
+                   , dt
                    , withinPastNDays
                    , dateBetween
                    , distinctOn
@@ -109,6 +110,10 @@ findMissingRowsOn lens1 lens2 checkProducer = do
   keyMap <- P.fold (\m r -> M.insert (view lens1 (r :: Record checkRec)) (0 :: Int8) m) M.empty id checkProducer
   pure $ P.filter (\(r :: Record rec2) -> M.notMember (view lens2 (r :: Record outRec))  keyMap)
 
+
+
+-- | function alias to make creating a Day more concise
+dt = fromGregorian
 
 -- | extracts the zoned time out of a Chicago type
 chicagoToZoned = (\(Chicago (TimeIn zt)) -> zt)
