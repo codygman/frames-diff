@@ -14,7 +14,7 @@
 module Frames.Diff ( defaultingProducer
                    , findMissingRowsOn
                    , Default(..)
-                   , pastNDays
+                   , withinPastNDays
                    , distinctOn
                    , innerJoin
                    ) where
@@ -44,6 +44,7 @@ import Data.Foldable as F
 import Control.Monad.Primitive (PrimMonad)
 import Frames.InCore (RecVec, VectorFor(..))
 import qualified Data.Vector as VB
+import Data.Time.Lens
 
 -- An en passant Default class
 class Default a where
@@ -105,22 +106,19 @@ findMissingRowsOn lens1 lens2 checkProducer = do
   pure $ P.filter (\(r :: Record rec2) -> M.notMember (view lens2 (r :: Record outRec))  keyMap)
 
 
-pastNDays
-  :: Getting Chicago t Chicago
-  -> Integer
-  -> ZonedTime
-  -> t
-  -> Bool
-pastNDays lens n today row = do
-         let
-           rowDate = (view lens row) :: Chicago
-           diff =  diffDays
-                     (utctDay . zonedTimeToUTC $ today)
-                     (utctDay . chicagoToUTCTime $ rowDate)
-           in diff <= n
+chicagoToZoned = (\(Chicago (TimeIn zt)) -> zt)
 
-        where chicagoToUTCTime :: Chicago -> UTCTime
-              chicagoToUTCTime = (\(Chicago (TimeIn z)) -> zonedTimeToUTC z)
+-- | Filters out records whose date isn't within the past N days
+withinPastNDays
+  :: (forall f. Functor f => ((Chicago -> f Chicago) -> Record rs -> f (Record rs)))
+  -> Int
+  -> Pipe (Record rs) (Record rs) IO r
+withinPastNDays targetLens n = P.filterM (\r -> do
+                                       now <- getCurrentTime
+                                       pure $ (getDateFromRec r) >= (modL day (subtract n) now)
+                                   )
+  where getDateFromRec = zonedTimeToUTC . chicagoToZoned . rget targetLens
+
 
 
 distinctOn lens1 rowProducer = do

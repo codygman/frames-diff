@@ -33,6 +33,7 @@ library
                      , unordered-containers >= 0.2.7.1
                      , vector >= 0.11.0.0
                      , vinyl
+                     , time-lens >= 0.4.0.1
 
   default-language:    Haskell2010
 
