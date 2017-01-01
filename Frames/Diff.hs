@@ -15,6 +15,7 @@ module Frames.Diff ( defaultingProducer
                    , findMissingRowsOn
                    , Default(..)
                    , withinPastNDays
+                   , dateBetween
                    , distinctOn
                    , innerJoin
                    ) where
@@ -92,6 +93,9 @@ holeFiller label rec1 = let fromJust = fromMaybe (error $ label ++ " failure")
                             recMaybed = recMaybe firsts
                         in fromJust recMaybed
 
+-- TODO document how this works
+-- does it take in a possibly faulty data source and then print out any rows from the source of truth
+-- which the possibly faulty data source does not have?
 findMissingRowsOn :: forall (checkRec :: [*]) (outRec :: [*])  (monad :: * -> *) (key :: *).
                      ( Monad monad
                      , Ord key
@@ -106,6 +110,7 @@ findMissingRowsOn lens1 lens2 checkProducer = do
   pure $ P.filter (\(r :: Record rec2) -> M.notMember (view lens2 (r :: Record outRec))  keyMap)
 
 
+-- | extracts the zoned time out of a Chicago type
 chicagoToZoned = (\(Chicago (TimeIn zt)) -> zt)
 
 -- | Filters out records whose date isn't within the past N days
@@ -120,6 +125,7 @@ withinPastNDays targetLens n = P.filterM (\r -> do
   where getDateFromRec = zonedTimeToUTC . chicagoToZoned . rget targetLens
 
 
+-- | Returns records whose target date falls between beginning of start Day and before start of end Day
 dateBetween :: (forall f. Functor f => ((Chicago -> f Chicago) -> Record rs -> f (Record rs)))
             -> Day
             -> Day
@@ -131,6 +137,7 @@ dateBetween target start end = P.filter (\r -> let targetDate = (rget target r) 
                                             targetDay >= start && targetDay < end
                                         )
 
+-- | Returns a HashSet of unique values in a row according to a lens and given rowProducer
 distinctOn lens1 rowProducer = do
   P.fold
     (\accumSet currentRow -> HS.insert (view lens1 currentRow) accumSet) -- what we build up the set with
@@ -138,6 +145,10 @@ distinctOn lens1 rowProducer = do
     id -- we just want to return the value we inserted, nothing more
     rowProducer -- our rowProducer, in this specific case it is just `rows`
 
+-- | Performs an inner join and keeps any duplicate column
+-- Recommend keeping columns in producers disjoint because accessing
+-- anything but the leftmost duplicate column could prove difficult.
+-- see: https://github.com/VinylRecords/Vinyl/issues/55#issuecomment-269891633
 innerJoin
   :: (RecVec (as ++ bs), PrimMonad m, Ord k) =>
      Producer (Rec Identity as) m ()
