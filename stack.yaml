@@ -2,6 +2,10 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
+- location:
+    git: https://github.com/acowley/Frames.git
+    commit: cd6367c4ed413c265eff51de57dbefa19c0cbc2e
+  extra-dep: true
 extra-deps:
 - tz-0.1.2.0
 resolver: lts-7.13

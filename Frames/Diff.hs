@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -41,7 +42,8 @@ import Data.String (IsString(..))
 import qualified Data.HashSet as HS
 import Data.Foldable as F
 import Control.Monad.Primitive (PrimMonad)
-import Frames.InCore (RecVec)
+import Frames.InCore (RecVec, VectorFor(..))
+import qualified Data.Vector as VB
 
 -- An en passant Default class
 class Default a where
@@ -59,6 +61,13 @@ instance (IsString ZonedTime) where fromString = isStringZonedTime
 instance (Applicative f, LAll Default ts, RecApplicative ts)
   => Default (Rec f ts) where
   def = reifyDict [pr|Default|] (pure def)
+
+
+-- TODO reconsider whether using the ord instance of the raw LocalTime with no timezone is okay or not
+instance Ord Chicago where
+    (Chicago (TimeIn (ZonedTime lt1 _))) `compare` (Chicago (TimeIn (ZonedTime lt2 _))) = lt1 `compare` lt2
+
+type instance VectorFor Chicago = VB.Vector
 
 defaultingProducer :: ( ReadRec rs
                       , RecApplicative rs
