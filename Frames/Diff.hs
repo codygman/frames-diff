@@ -120,6 +120,16 @@ withinPastNDays targetLens n = P.filterM (\r -> do
   where getDateFromRec = zonedTimeToUTC . chicagoToZoned . rget targetLens
 
 
+dateBetween :: (forall f. Functor f => ((Chicago -> f Chicago) -> Record rs -> f (Record rs)))
+            -> Day
+            -> Day
+            -> Pipe (Record rs) (Record rs) IO m
+dateBetween target start end = P.filter (\r -> let targetDate = (rget target r) :: Chicago
+                                                   targetDate' = chicagoToZoned targetDate :: ZonedTime
+                                                   targetDay = localDay (zonedTimeToLocalTime targetDate') :: Day
+                                          in
+                                            targetDay >= start && targetDay < end
+                                        )
 
 distinctOn lens1 rowProducer = do
   P.fold
