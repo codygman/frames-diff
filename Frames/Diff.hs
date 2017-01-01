@@ -131,16 +131,18 @@ withinPastNDays targetLens n = P.filterM (\r -> do
 
 
 -- | Returns records whose target date falls between beginning of start Day and before start of end Day
-dateBetween :: (forall f. Functor f => ((Chicago -> f Chicago) -> Record rs -> f (Record rs)))
+dateBetween :: (PrimMonad m1) =>
+               (forall f. Functor f => ((Chicago -> f Chicago) -> Record rs -> f (Record rs)))
             -> Day
             -> Day
-            -> Pipe (Record rs) (Record rs) IO m
+            -> Pipe (Record rs) (Record rs) m1 m
 dateBetween target start end = P.filter (\r -> let targetDate = (rget target r) :: Chicago
                                                    targetDate' = chicagoToZoned targetDate :: ZonedTime
                                                    targetDay = localDay (zonedTimeToLocalTime targetDate') :: Day
-                                          in
-                                            targetDay >= start && targetDay < end
+                                               in
+                                                 targetDay >= start && targetDay < end
                                         )
+
 
 -- | Returns a HashSet of unique values in a row according to a lens and given rowProducer
 distinctOn lens1 rowProducer = do
