@@ -19,6 +19,7 @@ module Frames.Diff ( defaultingProducer
                    , dateBetween
                    , distinctOn
                    , innerJoin
+                   , onFrame
                    ) where
 
 import Frames hiding ((:&))
@@ -33,6 +34,7 @@ import Data.Monoid ((<>),First(..))
 import Data.Maybe (fromMaybe)
 import Control.Lens.Getter(Getting)
 import qualified Pipes.Prelude as P
+import qualified Pipes as P
 import qualified Data.Text.Lazy as LT
 import qualified Data.Map.Strict as M
 import qualified Data.Text.Format as T
@@ -175,3 +177,6 @@ innerJoin leftProducer leftLens rightProducer rightLens = do
                             Nothing -> error "this shouldn't happen"
                            )
             )
+
+onFrame :: (RecVec rs, PrimMonad m) =>  Pipe (Record rs) (Record rs) m () -> FrameRec rs -> m (FrameRec rs)
+onFrame pipe f = inCoreAoS $ P.each f P.>-> pipe
