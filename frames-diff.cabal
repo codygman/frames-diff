@@ -38,6 +38,7 @@ library
                      , text
                      , text-format
                      , thyme
+                     , time
                      , time-lens >= 0.4.0.1
                      , tz >= 0.1.2.0 && < 0.2.0.0
                      , unordered-containers >= 0.2.7.1
