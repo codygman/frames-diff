@@ -17,6 +17,7 @@ module Frames.Diff ( defaultingProducer
                    , dt
                    , withinPastNDays
                    , dateBetween
+                   , dateBetween'
                    , distinctOn
                    , innerJoin
                    , onFrame
@@ -144,6 +145,20 @@ dateBetween target start end = P.filter (\r -> let targetDate = (rget target r) 
                                                in
                                                  targetDay >= start && targetDay < end
                                         )
+-- | dateBetween for a Frame such as the result of `inCoreAoS (producer)`
+-- example:
+-- λ> F.length <$> dateBetween' transactionDate (inCoreAoS transactions) (d 2014 4 1) (d 2014 4 5)
+-- 40
+dateBetween' :: (RecVec fr, PrimMonad m) =>
+                (forall f. Functor f => ((Chicago -> f Chicago) -> Record fr -> f (Record fr))) -- target lens
+             -> m (FrameRec fr) -- in frame
+             -> Day -- start
+             -> Day -- end
+             -> _ -- TODO can remove the monad wrapped FrameRec with runST I think, like: https://github.com/acowley/Frames/blob/122636432ab425f4cbf12fd400996eab78ef1462/src/Frames/InCore.hs#L215
+dateBetween' target frame start end = do
+  frame' <- frame
+  -- ((dateBetween target start end) `onFrame` frame')
+  ((dateBetween target start end) `onFrame` frame')
 
 
 -- | Returns a HashSet of unique values in a row according to a lens and given rowProducer
