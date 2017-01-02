@@ -21,6 +21,7 @@ module Frames.Diff ( defaultingProducer
                    , distinctOn
                    , innerJoin
                    , onFrame
+                   , takeFrame
                    ) where
 
 import Frames hiding ((:&))
@@ -195,3 +196,8 @@ innerJoin leftProducer leftLens rightProducer rightLens = do
 
 onFrame :: (RecVec rs, PrimMonad m) =>  Pipe (Record rs) (Record rs) m () -> FrameRec rs -> m (FrameRec rs)
 onFrame pipe f = inCoreAoS $ P.each f P.>-> pipe
+
+-- | turns a Frame into a list and takes n elements from it
+-- TODO is there a more efficient way?? Subset slicing works in this case.
+-- TODO is there a more efficient way to use the List api on Frames?
+takeFrame n = take n . F.toList
