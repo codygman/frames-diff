@@ -41,16 +41,20 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Map.Strict as M
 import qualified Data.Text.Format as T
 import Data.Int (Int8)
-import Frames.Time.Chicago.Columns
-import Frames.Time.Chicago.TimeIn
-import Data.Time
+import Frames.Time.LocalTime.Columns
+import Frames.Time.LocalTime.TimeIn
+import Data.Thyme.Time
 import Data.String (IsString(..))
 import qualified Data.HashSet as HS
 import Data.Foldable as F
 import Control.Monad.Primitive (PrimMonad)
 import Frames.InCore (RecVec, VectorFor(..))
 import qualified Data.Vector as VB
-import Data.Time.Lens
+import Data.Time.Zones.TH (includeTZFromDB)
+import Data.Time.Zones (localTimeToUTCTZ)
+import Data.Maybe
+import System.Locale
+-- import Data.Time.Lens
 
 -- An en passant Default class
 class Default a where
@@ -62,7 +66,24 @@ instance Default (s :-> Double) where def = Col 0.0
 instance Default (s :-> Bool) where def = Col False
 
 instance Default (s :-> Chicago) where def = Col (Chicago (TimeIn "America/Chicago"))
-instance (IsString ZonedTime) where fromString = isStringZonedTime
+-- instance (IsString ZonedTime) where fromString = isStringZonedTime
+instance (IsString UTCTime) where fromString = isStringUTCTime
+
+isStringUTCTime :: String -> UTCTime
+isStringUTCTime str = case (filter isJust (map ($ str) (map (parseTime defaultTimeLocale) formats) :: [Maybe UTCTime])) of
+                        (x:_) -> case (x :: Maybe UTCTime) of -- takes the first format matched
+                          Just tm -> tm
+                          Nothing -> do
+                            -- in case of an error provide an obviously wrong date value
+                            utcTmZero
+                        _ -> do
+                          -- in case of an error provide an obviously wrong date value
+                            utcTmZero
+  where utcTmZero = mkUTCTime (fromGregorian 0 0 0) (secondsToDiffTime 0)
+{-# INLINABLE isStringUTCTime #-}
+
+formats = ["%F %T", "%F", "%F %T", "%F %T %z %Z"]
+
 
 -- We can write instances for /all/ 'Rec' values.
 instance (Applicative f, LAll Default ts, RecApplicative ts)
@@ -72,7 +93,11 @@ instance (Applicative f, LAll Default ts, RecApplicative ts)
 
 -- TODO reconsider whether using the ord instance of the raw LocalTime with no timezone is okay or not
 instance Ord Chicago where
-    (Chicago (TimeIn (ZonedTime lt1 _))) `compare` (Chicago (TimeIn (ZonedTime lt2 _))) = lt1 `compare` lt2
+    (Chicago (TimeIn utc1)) `compare` (Chicago (TimeIn utc2)) = utc1 `compare` utc2
+
+instance Eq Chicago where
+    (Chicago (TimeIn utc1)) == (Chicago (TimeIn utc2)) = utc1 == utc2
+
 
 type instance VectorFor Chicago = VB.Vector
 
@@ -125,13 +150,15 @@ chicagoToZoned = (\(Chicago (TimeIn zt)) -> zt)
 -- | Filters out records whose date isn't within the past N days
 withinPastNDays
   :: (forall f. Functor f => ((Chicago -> f Chicago) -> Record rs -> f (Record rs)))
-  -> Int
+  -> NominalDiffTime
   -> Pipe (Record rs) (Record rs) IO r
 withinPastNDays targetLens n = P.filterM (\r -> do
                                        now <- getCurrentTime
-                                       pure $ (getDateFromRec r) >= (modL day (subtract n) now)
+                                       let second = 6e7
+                                       let n' = negate (n * second)
+                                       pure $ (getDateFromRec r) >= (addUTCTime n' now)
                                    )
-  where getDateFromRec = zonedTimeToUTC . chicagoToZoned . rget targetLens
+  where getDateFromRec = chicagoToZoned . rget targetLens
 
 
 -- | Returns records whose target date falls between beginning of start Day and before start of end Day
@@ -141,8 +168,8 @@ dateBetween :: (PrimMonad m1) =>
             -> Day
             -> Pipe (Record rs) (Record rs) m1 m
 dateBetween target start end = P.filter (\r -> let targetDate = (rget target r) :: Chicago
-                                                   targetDate' = chicagoToZoned targetDate :: ZonedTime
-                                                   targetDay = localDay (zonedTimeToLocalTime targetDate') :: Day
+                                                   targetDate' = chicagoToZoned targetDate :: UTCTime
+                                                   targetDay = (utctDay $ view utcTime targetDate') :: Day
                                                in
                                                  targetDay >= start && targetDay < end
                                         )
