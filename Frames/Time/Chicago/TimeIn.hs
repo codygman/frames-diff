@@ -56,7 +56,9 @@ isStringZonedTime str = case (filter isJust (map ($ str) (map mkParser formats) 
 
 
 formats = ["%F %T", "%F", "%F %T", "%F %T %z %Z"]
+
 mkParser = parseTimeM True defaultTimeLocale
+{-# INLINABLE mkParser #-}
 
 deriving instance Generic Day
 deriving instance Hashable Day

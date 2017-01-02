@@ -146,6 +146,8 @@ dateBetween target start end = P.filter (\r -> let targetDate = (rget target r) 
                                                in
                                                  targetDay >= start && targetDay < end
                                         )
+{-# INLINABLE dateBetween #-}
+
 -- | dateBetween for a Frame such as the result of `inCoreAoS (producer)`
 -- example:
 -- λ> F.length <$> dateBetween' transactionDate (inCoreAoS transactions) (d 2014 4 1) (d 2014 4 5)
@@ -160,6 +162,7 @@ dateBetween' target frame start end = do
   frame' <- frame
   -- ((dateBetween target start end) `onFrame` frame')
   ((dateBetween target start end) `onFrame` frame')
+{-# INLINABLE dateBetween' #-}
 
 
 -- | Returns a HashSet of unique values in a row according to a lens and given rowProducer
@@ -196,6 +199,7 @@ innerJoin leftProducer leftLens rightProducer rightLens = do
 
 onFrame :: (RecVec rs, PrimMonad m) =>  Pipe (Record rs) (Record rs) m () -> FrameRec rs -> m (FrameRec rs)
 onFrame pipe f = inCoreAoS $ P.each f P.>-> pipe
+{-# INLINABLE onFrame #-}
 
 -- | turns a Frame into a list and takes n elements from it
 -- TODO is there a more efficient way?? Subset slicing works in this case.
