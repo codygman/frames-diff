@@ -45,12 +45,6 @@ newtype Chicago = Chicago (TimeIn "America/Chicago") deriving (Show)
 instance Parseable Chicago where
   parse = fmap (fmap Chicago) . parse
 
--- TODO add some tests to make sure these act sanely
-deriving instance Eq (TimeIn "America/Chicago")
-deriving instance Ord ZonedTime
-deriving instance Ord (TimeIn "America/Chicago")
-deriving instance Ord Chicago
-
 instance Eq Chicago where
    (Chicago (TimeIn zndTm)) == (Chicago (TimeIn zndTm')) = zndTm == zndTm'
 
