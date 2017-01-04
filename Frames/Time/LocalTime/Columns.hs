@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -5,6 +7,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- | Define the column types used to represent our data. Here, we wish
 -- to parse data captured as 'Data.Time.LocalTime.LocalTime' values
@@ -18,11 +22,13 @@ import Data.Time.Zones (localTimeToUTCTZ)
 import Language.Haskell.TH
 import qualified Data.Text as T
 import Data.Monoid ((<>))
+import GHC.Generics
 -- import Data.Time.Zones.TH
 
 import Data.Thyme.Time
 import Data.Time.Zones.Read (parseOlson)
 import qualified Data.ByteString.Lazy.Char8 as C8
+import Data.Hashable
 
 
 
@@ -44,6 +50,16 @@ instance Parseable Chicago where
 
 -- | The column types we expect our data to conform to
 type MyColumns = Chicago ': CommonColumns
+
+-- deriving instance Eq (TimeIn "America/Chicago")
+-- deriving instance Ord (TimeIn "America/Chicago")
+-- deriving instance Generic (TimeIn "America/Chicago")
+-- deriving instance Generic Chicago
+-- deriving instance Ord Chicago
+-- deriving instance Hashable (Day)
+-- deriving instance Hashable (UTCView)
+-- deriving instance Hashable (TimeIn "America/Chicago")
+-- deriving instance Hashable Chicago
 
 
 printTimeInTH = do

@@ -50,6 +50,7 @@ deriving instance Eq (TimeIn "America/Chicago")
 deriving instance Ord ZonedTime
 deriving instance Ord (TimeIn "America/Chicago")
 deriving instance Ord Chicago
+deriving instance Hashable Chicago
 
 instance Eq Chicago where
    (Chicago (TimeIn zndTm)) == (Chicago (TimeIn zndTm')) = zndTm == zndTm'
@@ -57,7 +58,6 @@ instance Eq Chicago where
 -- instance Eq ZonedTime where
 --   a == b = zonedTimeToUTC a == zonedTimeToUTC b
 
-deriving instance Hashable Chicago
 
 -- | The column types we expect our data to conform to
 type MyColumns = Chicago ': CommonColumns

@@ -23,7 +23,7 @@ import Data.Maybe (fromJust)
 
 -- | A 'UTCTime' tagged with a symbol denoting the 'TZ' time zone from
 -- whence it came.
-newtype TimeIn (zone :: Symbol) = TimeIn Data.Thyme.Clock.UTCTime deriving Show
+newtype TimeIn (zone :: Symbol) = TimeIn Data.Thyme.Clock.UTCView deriving Show
 
 -- | Try to parse a 'LocalTime' value using common formats.
 parseLocalTime :: MonadPlus m => T.Text -> m Data.Thyme.Time.LocalTime

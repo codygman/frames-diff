@@ -41,8 +41,13 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Map.Strict as M
 import qualified Data.Text.Format as T
 import Data.Int (Int8)
-import Frames.Time.LocalTime.Columns
-import Frames.Time.LocalTime.TimeIn
+import qualified Frames.Time.LocalTime.Columns as LT
+import qualified Frames.Time.LocalTime.TimeIn as LT
+
+import qualified Frames.Time.Chicago.Columns as C
+import qualified Frames.Time.Chicago.TimeIn as C
+
+
 import Data.Thyme.Time
 import Data.String (IsString(..))
 import qualified Data.HashSet as HS
@@ -65,7 +70,8 @@ instance Default (s :-> Text) where def = Col mempty
 instance Default (s :-> Double) where def = Col 0.0
 instance Default (s :-> Bool) where def = Col False
 
-instance Default (s :-> Chicago) where def = Col (Chicago (TimeIn "America/Chicago"))
+instance Default (s :-> LT.Chicago) where def = Col (LT.Chicago (LT.TimeIn "America/Chicago"))
+-- instance Default (s :-> C.Chicago) where def = Col (C.Chicago (C.TimeIn "America/C.Chicago"))
 -- instance (IsString ZonedTime) where fromString = isStringZonedTime
 instance (IsString UTCTime) where fromString = isStringUTCTime
 
@@ -92,14 +98,19 @@ instance (Applicative f, LAll Default ts, RecApplicative ts)
 
 
 -- TODO reconsider whether using the ord instance of the raw LocalTime with no timezone is okay or not
-instance Ord Chicago where
-    (Chicago (TimeIn utc1)) `compare` (Chicago (TimeIn utc2)) = utc1 `compare` utc2
+instance Ord LT.Chicago where
+    (LT.Chicago (LT.TimeIn utc1)) `compare` (LT.Chicago (LT.TimeIn utc2)) = utc1 `compare` utc2
+instance Ord C.Chicago where
+    (C.Chicago (C.TimeIn utc1)) `compare` (C.Chicago (C.TimeIn utc2)) = utc1 `compare` utc2
 
-instance Eq Chicago where
-    (Chicago (TimeIn utc1)) == (Chicago (TimeIn utc2)) = utc1 == utc2
+instance Eq LT.Chicago where
+    (LT.Chicago (LT.TimeIn utc1)) == (LT.Chicago (LT.TimeIn utc2)) = utc1 == utc2
+instance Eq C.Chicago where
+    (C.Chicago (C.TimeIn utc1)) == (C.Chicago (C.TimeIn utc2)) = utc1 == utc2
 
 
-type instance VectorFor Chicago = VB.Vector
+type instance VectorFor LT.Chicago = VB.Vector
+type instance VectorFor C.Chicago = VB.Vector
 
 defaultingProducer :: ( ReadRec rs
                       , RecApplicative rs
@@ -145,7 +156,8 @@ findMissingRowsOn lens1 lens2 checkProducer = do
 dt = fromGregorian
 
 -- | extracts the zoned time out of a Chicago type
-chicagoToZoned = (\(Chicago (TimeIn zt)) -> zt)
+chicagoToZoned = (\(LT.Chicago (LT.TimeIn zt)) -> zt)
+chicagoToZoned = (\(C.Chicago (C.TimeIn zt)) -> zt)
 
 -- | Filters out records whose date isn't within the past N days
 withinPastNDays
