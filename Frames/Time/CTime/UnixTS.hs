@@ -13,6 +13,10 @@ module Frames.Time.CTime.UnixTS ( MyColumns
                                  , utcToUnix
                                  , utcToUnixTS
                                  , parseUTCTime
+                                 , daysToUnixDiffTime
+                                 , addUnixDiffTime
+                                 , dt
+                                 , dtNDaysAgo
   ) where
 
 import Foreign.C.Types
@@ -64,6 +68,18 @@ utcToUnixTS :: Data.Time.UTCTime -> UnixTS
 utcToUnixTS = UnixTS . utcToUnix
 
 todayEpoch = toEpochTime <$> getUnixTime
+
+dt :: Integer -> Int -> Int -> UnixTS
+dt y m d = utcToUnixTS (UTCTime day' (0 :: DiffTime))
+  where day' = Data.Time.fromGregorian y m d
+
+daysToUnixDiffTime n = secondsToUnixDiffTime (n*60*24)
+
+dtNDaysAgo :: UnixTime -> Integer -> UnixTS
+dtNDaysAgo now n = UnixTS $ now `addUnixDiffTime` daysToUnixDiffTime n
+
+dtNDaysAgo' :: UTCTime -> Integer -> UnixTS
+dtNDaysAgo' now n = UnixTS $ (utcToUnix now :: UnixTime) `addUnixDiffTime` daysToUnixDiffTime n
 
  -- we'll only consider trying to parse date strings from text from:
       -- 1997-07-16                        -- min: 10 characters
