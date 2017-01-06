@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 import Test.Hspec
 import Test.Hspec.Expectations
 import Test.QuickCheck
@@ -9,6 +10,7 @@ import System.Posix.Types
 import Data.UnixTime
 import Frames.Time.CTime.UnixTS
 import Data.Time.Calendar
+import Data.Maybe (isJust)
 
 timeParseUTCTimeFromSecondsThenShow = show . posixSecondsToUTCTime . realToFrac . utcTimeToPOSIXSeconds
 
@@ -39,6 +41,12 @@ main = hspec $ do
     it "unixTS show instance is exactly the same as UTCTime show instance" $ property $
       \x -> show (utcToUnixTS (x :: Data.Time.UTCTime) :: UnixTS) ==
                timeParseUTCTimeFromSecondsThenShow (x :: Data.Time.UTCTime)
+    it "parses valid time text 1" $
+      parseUTCTime' "2017-01-06 00:00:00 +0000 UTC" `shouldSatisfy` isJust
+    it "parses valid time text 2" $
+      parseUTCTime' "2017-01-06 00:00:00" `shouldSatisfy` isJust
+    it "parses valid time text 3" $
+      parseUTCTime' "2017-01-06" `shouldSatisfy` isJust
 
 
 

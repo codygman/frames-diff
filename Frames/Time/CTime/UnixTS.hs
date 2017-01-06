@@ -12,6 +12,7 @@ module Frames.Time.CTime.UnixTS ( MyColumns
                                  , unixToUTC
                                  , utcToUnix
                                  , utcToUnixTS
+                                 , parseUTCTime'
   ) where
 
 import Foreign.C.Types
@@ -61,9 +62,9 @@ utcToUnix = fromEpochTime . epochTime
 utcToUnixTS :: Data.Time.UTCTime -> UnixTS
 utcToUnixTS = UnixTS . utcToUnix
 
-
-
 todayEpoch = toEpochTime <$> getUnixTime
+
+-- parseUTCTime fmt txt = utcToUnixTS <$> Data.Time.parseTimeM True Data.Time.defaultTimeLocale fmt txt
 
 instance Readable UnixTS  where
   fromText t
@@ -74,22 +75,24 @@ instance Readable UnixTS  where
       -- so best to short circuit text that isn't within these ranges
       -- TODO use parseUnixTime here... but it needs to be more restrictive than accepting "000000","", or "0" as a valid timestamp
       -- | T.length t >= 10 && T.length t <= 28 = msum $  (($ C8pack t) . parseUnixTime) <$> formats
-      | T.length t >= 10 && T.length t <= 28 = msum (map (\ d -> mkParser' d (T.unpack t)) formats)
+      | T.length t >= 10 && T.length t <= 28 = parseUTCTime' t
       | otherwise = mzero
-    where formats :: [String]
-          formats = [ "%F %T"
-                    , "%F"
-                    , "%F %T"
-                    , "%F %T %z %Z"
 
-                    -- some european formats
-                    , "%d/%m/%Y"
-                    ]
-          mkParser fmt txt = Data.Time.parseTimeM True Data.Time.defaultTimeLocale fmt txt -- TODO should I use a different time locale?
-          mkParser' fmt txt  = utcToUnixTS <$> mkParser fmt txt
+parseUTCTime fmt txt = utcToUnixTS <$> Data.Time.parseTimeM True Data.Time.defaultTimeLocale fmt txt 
 
-instance Parseable UnixTS where
-  parse = fmap Possibly . fromText
+parseUTCTime' txt = msum (map (\ d -> parseUTCTime d (T.unpack txt)) formats)
+
+formats :: [String]
+formats = [ "%F %T"
+          , "%F"
+          , "%F %T"
+          , "%F %T %z %Z"
+            -- some european formats
+          , "%d/%m/%Y"
+          ]
+
+
+instance Parseable UnixTS
 
 type MyColumns = UnixTS ': CommonColumns
 
