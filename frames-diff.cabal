@@ -19,8 +19,10 @@ library
                      , Frames.Default
                      , Frames.Time.Chicago.TimeIn
                      , Frames.Time.Chicago.Columns
+                     , Frames.Time.CTime.UnixTS
   build-depends:       Frames
                      , base >= 4.7 && < 5
+                     , bytestring >= 0.10.8.1
                      , containers
                      , foldl
                      , hashable >= 1.2.4.0
@@ -28,18 +30,32 @@ library
                      , mtl >= 2.2.1
                      , pipes
                      , primitive >= 0.6.1.0
+                     , readable >= 0.3.1
                      , template-haskell >= 2.11.0.0
                      , text
                      , text-format
                      , time
                      , time-lens >= 0.4.0.1
                      , tz >= 0.1.2.0 && < 0.2.0.0
+                     , unix-time
                      , unordered-containers >= 0.2.7.1
                      , vector >= 0.11.0.0
                      , vinyl
-                     , time-lens >= 0.4.0.1
 
   default-language:    Haskell2010
+
+Test-Suite test-frames-diff
+    type:       exitcode-stdio-1.0
+    hs-source-dirs: test
+    main-is:    Test.hs
+    build-depends: QuickCheck >= 2.8.2
+                 , base
+                 , frames-diff
+                 , hspec
+                 , hspec-expectations
+                 , quickcheck-instances >= 0.3.12
+                 , time
+                 , unix-time
 
 source-repository head
   type:     git
