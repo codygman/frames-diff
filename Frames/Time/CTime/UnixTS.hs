@@ -71,11 +71,12 @@ instance Readable UnixTS  where
       -- we'll only consider trying to parse date strings from text from:
       -- 1997-07-16                        -- min: 10 characters
       -- 1997-07-16T19:20:30.45+01:00      -- max: 28 characters
+      -- NO! I changed max to 100 characters because I got bit by this ;) considering taking it out!
       -- this instance will affect repl reload time and compile time
       -- so best to short circuit text that isn't within these ranges
       -- TODO use parseUnixTime here... but it needs to be more restrictive than accepting "000000","", or "0" as a valid timestamp
       -- | T.length t >= 10 && T.length t <= 28 = msum $  (($ C8pack t) . parseUnixTime) <$> formats
-      | T.length t >= 10 && T.length t <= 28 = parseUTCTime' t
+      | T.length t >= 10 && T.length t <= 100 = parseUTCTime' t
       | otherwise = mzero
 
 parseUTCTime fmt txt = utcToUnixTS <$> Data.Time.parseTimeM True Data.Time.defaultTimeLocale fmt txt 
