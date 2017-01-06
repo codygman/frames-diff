@@ -70,10 +70,11 @@ instance Readable UnixTS  where
       -- 1997-07-16T19:20:30.45+01:00      -- max: 28 characters
       -- this instance will affect repl reload time and compile time
       -- so best to short circuit text that isn't within these ranges
+      -- TODO use parseUnixTime here... but it needs to be more restrictive than accepting "000000","", or "0" as a valid timestamp
       -- | T.length t >= 10 && T.length t <= 28 = msum $  (($ C8pack t) . parseUnixTime) <$> formats
-      | T.length t >= 10 && T.length t <= 28 = msum (map (\ fmt -> pure . UnixTS . parseUnixTime fmt $ TE.encodeUtf8 t) formats)
+      | T.length t >= 10 && T.length t <= 28 = msum (map (\ d -> mkParser' d (T.unpack t)) formats)
       | otherwise = mzero
-    where formats :: [C8.ByteString]
+    where formats :: [String]
           formats = [ "%F %T"
                     , "%F"
                     , "%F %T"
@@ -82,6 +83,8 @@ instance Readable UnixTS  where
                     -- some european formats
                     , "%d/%m/%Y"
                     ]
+          mkParser fmt txt = Data.Time.parseTimeM True Data.Time.defaultTimeLocale fmt txt -- TODO should I use a different time locale?
+          mkParser' fmt txt  = utcToUnixTS <$> mkParser fmt txt
 
 instance Parseable UnixTS where
   parse = fmap Possibly . fromText
