@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -30,6 +31,7 @@ import Control.Monad
 import Data.UnixTime (UnixTime(..), parseUnixTime, toEpochTime, getUnixTime)
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Char8 as C8
+import Frames.Default
 
 newtype UnixTS = UnixTS UnixTime
 -- TODO update to use unboxed vector if possible
@@ -90,3 +92,5 @@ instance Parseable UnixTS where
   parse = fmap Possibly . fromText
 
 type MyColumns = UnixTS ': CommonColumns
+
+instance Default (s :-> UnixTS) where def = Col (UnixTS $ fromEpochTime (0 :: EpochTime))
