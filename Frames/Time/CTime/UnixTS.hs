@@ -83,6 +83,7 @@ instance Readable UnixTS  where
                     , "%d/%m/%Y"
                     ]
 
-instance Parseable UnixTS
+instance Parseable UnixTS where
+  parse = fmap Possibly . fromText
 
 type MyColumns = UnixTS ': CommonColumns
