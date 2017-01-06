@@ -15,12 +15,8 @@ module Frames.Diff ( defaultingProducer
                    , findMissingRowsOn
                    , Default(..)
                    , dt
-                   , withinPastNDays
-                   , dateBetween
-                   , dateBetween'
                    , distinctOn
                    , innerJoin
-                   , onFrame
                    , takeFrame
                    ) where
 
@@ -41,40 +37,18 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Map.Strict as M
 import qualified Data.Text.Format as T
 import Data.Int (Int8)
-import Frames.Time.Chicago.Columns
-import Frames.Time.Chicago.TimeIn
 import Data.Time
-import Data.String (IsString(..))
 import qualified Data.HashSet as HS
 import Data.Foldable as F
 import Control.Monad.Primitive (PrimMonad)
 import Frames.InCore (RecVec, VectorFor(..))
-import qualified Data.Vector as VB
-import Data.Time.Lens
+import Frames.Default
 
--- An en passant Default class
-class Default a where
-  def :: a
-
-instance Default (s :-> Int) where def = Col 0
-instance Default (s :-> Text) where def = Col mempty
-instance Default (s :-> Double) where def = Col 0.0
-instance Default (s :-> Bool) where def = Col False
-
-instance Default (s :-> Chicago) where def = Col (Chicago (TimeIn "America/Chicago"))
-instance (IsString ZonedTime) where fromString = isStringZonedTime
 
 -- We can write instances for /all/ 'Rec' values.
 instance (Applicative f, LAll Default ts, RecApplicative ts)
   => Default (Rec f ts) where
   def = reifyDict [pr|Default|] (pure def)
-
-
--- TODO reconsider whether using the ord instance of the raw LocalTime with no timezone is okay or not
-instance Ord Chicago where
-    (Chicago (TimeIn (ZonedTime lt1 _))) `compare` (Chicago (TimeIn (ZonedTime lt2 _))) = lt1 `compare` lt2
-
-type instance VectorFor Chicago = VB.Vector
 
 defaultingProducer :: ( ReadRec rs
                       , RecApplicative rs
@@ -119,50 +93,7 @@ findMissingRowsOn lens1 lens2 checkProducer = do
 -- | function alias to make creating a Day more concise
 dt = fromGregorian
 
--- | extracts the zoned time out of a Chicago type
-chicagoToZoned = (\(Chicago (TimeIn zt)) -> zt)
 
--- | Filters out records whose date isn't within the past N days
-withinPastNDays
-  :: (forall f. Functor f => ((Chicago -> f Chicago) -> Record rs -> f (Record rs)))
-  -> Int
-  -> Pipe (Record rs) (Record rs) IO r
-withinPastNDays targetLens n = P.filterM (\r -> do
-                                       now <- getCurrentTime
-                                       pure $ (getDateFromRec r) >= (modL day (subtract n) now)
-                                   )
-  where getDateFromRec = zonedTimeToUTC . chicagoToZoned . rget targetLens
-
-
--- | Returns records whose target date falls between beginning of start Day and before start of end Day
-dateBetween :: (PrimMonad m1) =>
-               (forall f. Functor f => ((Chicago -> f Chicago) -> Record rs -> f (Record rs)))
-            -> Day
-            -> Day
-            -> Pipe (Record rs) (Record rs) m1 m
-dateBetween target start end = P.filter (\r -> let targetDate = (rget target r) :: Chicago
-                                                   targetDate' = chicagoToZoned targetDate :: ZonedTime
-                                                   targetDay = localDay (zonedTimeToLocalTime targetDate') :: Day
-                                               in
-                                                 targetDay >= start && targetDay < end
-                                        )
-{-# INLINABLE dateBetween #-}
-
--- | dateBetween for a Frame such as the result of `inCoreAoS (producer)`
--- example:
--- λ> F.length <$> dateBetween' transactionDate (inCoreAoS transactions) (d 2014 4 1) (d 2014 4 5)
--- 40
-dateBetween' :: (RecVec fr, PrimMonad m) =>
-                (forall f. Functor f => ((Chicago -> f Chicago) -> Record fr -> f (Record fr))) -- target lens
-             -> m (FrameRec fr) -- in frame
-             -> Day -- start
-             -> Day -- end
-             -> _ -- TODO can remove the monad wrapped FrameRec with runST I think, like: https://github.com/acowley/Frames/blob/122636432ab425f4cbf12fd400996eab78ef1462/src/Frames/InCore.hs#L215
-dateBetween' target frame start end = do
-  frame' <- frame
-  -- ((dateBetween target start end) `onFrame` frame')
-  ((dateBetween target start end) `onFrame` frame')
-{-# INLINABLE dateBetween' #-}
 
 
 -- | Returns a HashSet of unique values in a row according to a lens and given rowProducer
@@ -197,9 +128,6 @@ innerJoin leftProducer leftLens rightProducer rightLens = do
                            )
             )
 
-onFrame :: (RecVec rs, PrimMonad m) =>  Pipe (Record rs) (Record rs) m () -> FrameRec rs -> m (FrameRec rs)
-onFrame pipe f = inCoreAoS $ P.each f P.>-> pipe
-{-# INLINABLE onFrame #-}
 
 -- | turns a Frame into a list and takes n elements from it
 -- TODO is there a more efficient way?? Subset slicing works in this case.
