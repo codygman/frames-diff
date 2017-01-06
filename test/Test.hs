@@ -42,11 +42,11 @@ main = hspec $ do
       \x -> show (utcToUnixTS (x :: Data.Time.UTCTime) :: UnixTS) ==
                timeParseUTCTimeFromSecondsThenShow (x :: Data.Time.UTCTime)
     it "parses valid time text 1" $
-      parseUTCTime' "2017-01-06 00:00:00 +0000 UTC" `shouldSatisfy` isJust
+      parseUTCTime "2017-01-06 00:00:00 +0000 UTC" `shouldSatisfy` isJust
     it "parses valid time text 2" $
-      parseUTCTime' "2017-01-06 00:00:00" `shouldSatisfy` isJust
+      parseUTCTime "2017-01-06 00:00:00" `shouldSatisfy` isJust
     it "parses valid time text 3" $
-      parseUTCTime' "2017-01-06" `shouldSatisfy` isJust
+      parseUTCTime "2017-01-06" `shouldSatisfy` isJust
 
 
 

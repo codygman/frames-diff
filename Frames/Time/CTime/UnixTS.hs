@@ -12,7 +12,7 @@ module Frames.Time.CTime.UnixTS ( MyColumns
                                  , unixToUTC
                                  , utcToUnix
                                  , utcToUnixTS
-                                 -- , parseUTCTime'
+                                 , parseUTCTime
   ) where
 
 import Foreign.C.Types
@@ -65,7 +65,7 @@ utcToUnixTS = UnixTS . utcToUnix
 
 todayEpoch = toEpochTime <$> getUnixTime
 
--- parseUTCTime fmt txt = utcToUnixTS <$> Data.Time.parseTimeM True Data.Time.defaultTimeLocale fmt txt
+parseUTCTime txt = msum (map (\ fmt -> pure . UnixTS . parseUnixTime fmt $ TE.encodeUtf8 txt) formats)
 
 instance Readable UnixTS  where
   fromText t
@@ -79,12 +79,8 @@ instance Readable UnixTS  where
       -- | T.length t >= 10 && T.length t <= 28 = msum $  (($ C8pack t) . parseUnixTime) <$> formats
       -- | T.length t >= 10 && T.length t <= 100 = parseUTCTime' t
       -- our time text string is also required to have one or more spaces
-      | T.length t >= 10 && T.length t <= 100 && (isJust (T.find  (== ' ') t)) = msum (map (\ fmt -> pure . UnixTS . parseUnixTime fmt $ TE.encodeUtf8 t) formats)
+      | T.length t >= 10 && T.length t <= 100 && (isJust (T.find  (== ' ') t)) = parseUTCTime t
       | otherwise = mzero
-
--- parseUTCTime fmt txt = utcToUnixTS <$> Data.Time.parseTimeM True Data.Time.defaultTimeLocale fmt txt 
-
--- parseUTCTime' txt = msum (map (\ d -> parseUTCTime d (T.unpack txt)) formats)
 
 formats :: [C8.ByteString]
 formats = [ "%F %T"
