@@ -25,13 +25,15 @@ import System.Posix.Types
 import Data.UnixTime
 import qualified Data.Text as T
 import qualified Data.Vector.Unboxed as UB
+import qualified Data.Vector as VB
 import Control.Monad
 import Data.UnixTime (UnixTime(..), parseUnixTime, toEpochTime, getUnixTime)
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Char8 as C8
 
 newtype UnixTS = UnixTS UnixTime
-type instance VectorFor UnixTime = UB.Vector
+-- TODO update to use unboxed vector if possible
+type instance VectorFor UnixTS = VB.Vector
 
 instance Show UnixTS where
   show (UnixTS utm@(UnixTime seconds micros)) = show . posixSecondsToUTCTime . realToFrac . toEpochTime $ utm -- show (realToFrac seconds :: PosixTime)
