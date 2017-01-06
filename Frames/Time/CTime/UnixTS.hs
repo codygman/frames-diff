@@ -73,7 +73,7 @@ dt :: Integer -> Int -> Int -> UnixTS
 dt y m d = utcToUnixTS (UTCTime day' (0 :: DiffTime))
   where day' = Data.Time.fromGregorian y m d
 
-daysToUnixDiffTime n = secondsToUnixDiffTime (n*60*24)
+daysToUnixDiffTime n = secondsToUnixDiffTime (n*60*60*24)
 
 dtNDaysAgo :: UnixTime -> Integer -> UnixTS
 dtNDaysAgo now n = UnixTS $ now `addUnixDiffTime` daysToUnixDiffTime n
