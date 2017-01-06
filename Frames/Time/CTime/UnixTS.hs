@@ -65,11 +65,7 @@ utcToUnixTS = UnixTS . utcToUnix
 
 todayEpoch = toEpochTime <$> getUnixTime
 
-parseUTCTime txt = msum (map (\ fmt -> pure . UnixTS . parseUnixTime fmt $ TE.encodeUtf8 txt) formats)
-
-instance Readable UnixTS  where
-  fromText t
-      -- we'll only consider trying to parse date strings from text from:
+ -- we'll only consider trying to parse date strings from text from:
       -- 1997-07-16                        -- min: 10 characters
       -- 1997-07-16T19:20:30.45+01:00      -- max: 28 characters
       -- NO! I changed max to 100 characters because I got bit by this ;) considering taking it out!
@@ -78,9 +74,13 @@ instance Readable UnixTS  where
       -- TODO use parseUnixTime here... but it needs to be more restrictive than accepting "000000","", or "0" as a valid timestamp
       -- | T.length t >= 10 && T.length t <= 28 = msum $  (($ C8pack t) . parseUnixTime) <$> formats
       -- | T.length t >= 10 && T.length t <= 100 = parseUTCTime' t
-      -- our time text string is also required to have one or more spaces
-      | T.length t >= 10 && T.length t <= 100 && (isJust (T.find  (== ' ') t)) = parseUTCTime t
-      | otherwise = mzero
+      -- our time text string is also required to have one or more dashes
+parseUTCTime txt
+  | T.length txt >= 10 && T.length txt <= 100 && (isJust (T.find  (== '-') txt)) = msum (map (\ fmt -> pure . UnixTS . parseUnixTime fmt $ TE.encodeUtf8 txt) formats)
+  | otherwise = mzero
+
+instance Readable UnixTS  where
+  fromText t = parseUTCTime t
 
 formats :: [C8.ByteString]
 formats = [ "%F %T"

@@ -10,7 +10,7 @@ import System.Posix.Types
 import Data.UnixTime
 import Frames.Time.CTime.UnixTS
 import Data.Time.Calendar
-import Data.Maybe (isJust)
+import Data.Maybe (isJust,isNothing)
 
 timeParseUTCTimeFromSecondsThenShow = show . posixSecondsToUTCTime . realToFrac . utcTimeToPOSIXSeconds
 
@@ -47,6 +47,10 @@ main = hspec $ do
       parseUTCTime "2017-01-06 00:00:00" `shouldSatisfy` isJust
     it "parses valid time text 3" $
       parseUTCTime "2017-01-06" `shouldSatisfy` isJust
+    it "does not parse a date with no spaces" $
+      parseUTCTime "20170106" `shouldSatisfy` isNothing
+  it "does not parse an empty string" $
+      parseUTCTime "" `shouldSatisfy` isNothing
 
 
 
