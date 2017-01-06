@@ -12,7 +12,7 @@ module Frames.Time.CTime.UnixTS ( MyColumns
                                  , unixToUTC
                                  , utcToUnix
                                  , utcToUnixTS
-                                 , parseUTCTime'
+                                 -- , parseUTCTime'
   ) where
 
 import Foreign.C.Types
@@ -33,6 +33,7 @@ import Data.UnixTime (UnixTime(..), parseUnixTime, toEpochTime, getUnixTime)
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Char8 as C8
 import Frames.Default
+import Data.Maybe
 
 newtype UnixTS = UnixTS UnixTime
 -- TODO update to use unboxed vector if possible
@@ -76,14 +77,16 @@ instance Readable UnixTS  where
       -- so best to short circuit text that isn't within these ranges
       -- TODO use parseUnixTime here... but it needs to be more restrictive than accepting "000000","", or "0" as a valid timestamp
       -- | T.length t >= 10 && T.length t <= 28 = msum $  (($ C8pack t) . parseUnixTime) <$> formats
-      | T.length t >= 10 && T.length t <= 100 = parseUTCTime' t
+      -- | T.length t >= 10 && T.length t <= 100 = parseUTCTime' t
+      -- our time text string is also required to have one or more spaces
+      | T.length t >= 10 && T.length t <= 100 && (isJust (T.find  (== ' ') t)) = msum (map (\ fmt -> pure . UnixTS . parseUnixTime fmt $ TE.encodeUtf8 t) formats)
       | otherwise = mzero
 
-parseUTCTime fmt txt = utcToUnixTS <$> Data.Time.parseTimeM True Data.Time.defaultTimeLocale fmt txt 
+-- parseUTCTime fmt txt = utcToUnixTS <$> Data.Time.parseTimeM True Data.Time.defaultTimeLocale fmt txt 
 
-parseUTCTime' txt = msum (map (\ d -> parseUTCTime d (T.unpack txt)) formats)
+-- parseUTCTime' txt = msum (map (\ d -> parseUTCTime d (T.unpack txt)) formats)
 
-formats :: [String]
+formats :: [C8.ByteString]
 formats = [ "%F %T"
           , "%F"
           , "%F %T"
