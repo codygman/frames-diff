@@ -66,4 +66,4 @@ benchmark mainbench
   type:             exitcode-stdio-1.0
   main-is: Bench.hs
   hs-source-dirs: bench, Frames
-  build-depends: base, criterion, Frames, frames-diff, text, thyme
+  build-depends: base, criterion, Frames, frames-diff, text, thyme, deepseq
