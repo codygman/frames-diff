@@ -10,6 +10,7 @@ import System.Posix.Types
 -- import Data.Time.Calendar
 import Data.Maybe (isJust,isNothing)
 import Data.Thyme
+import Data.Thyme.Time
 import Frames.Time.LocalTime
 import Frames.ColumnTypeable
 
@@ -34,6 +35,8 @@ import Frames.ColumnTypeable
 --         [ ut { Data.Time.utctDayTime = t' } | t' <- shrink dayTime ]
 
 
+referenceDate = LocalTime (fromGregorian 2016 5 3) (TimeOfDay 0 0 (secondsToDiffTime 0))
+
 main :: IO ()
 main = hspec $ do
   describe "Frames.Time" $ do
@@ -41,9 +44,9 @@ main = hspec $ do
       describe "fuzzyParseLocalTime" $ do
         describe "Should successfully parse these values" $ do
           it "should give a default value for bad dates" $
-            (fuzzyParseLocalTime "" :: Maybe LocalTime) `shouldBe` pure zeroLocalTm
+            (fuzzyParseLocalTime "" :: Maybe LocalTime) `shouldSatisfy` isNothing
           it "should parse %F" $
-            (fuzzyParseLocalTime "2016-05-03" :: Maybe LocalTime) `shouldSatisfy` isJust
+            (fuzzyParseLocalTime "2016-05-03" :: Maybe LocalTime) `shouldBe` pure referenceDate
           it "should parse %F %T" $
             (fuzzyParseLocalTime "2016-05-03 00:00:00" :: Maybe LocalTime) `shouldSatisfy` isJust
           it "should parse %F %T %z %Z" $
@@ -54,15 +57,15 @@ main = hspec $ do
         describe "LocalTime Parseable instance" $ do
           describe "Should successfully parse these values" $ do
             it "should give a default value for bad dates" $
-              (parse "" :: Maybe (Parsed LocalTime)) `shouldBe` (Just . Definitely $ zeroLocalTm)
+              (parse "" :: Maybe (Parsed LocalTime)) `shouldSatisfy` isNothing
             it "should parse %F" $
-              (parse "%F" :: Maybe (Parsed LocalTime)) `shouldSatisfy` isJust
+              (parse "2016-05-03" :: Maybe (Parsed LocalTime)) `shouldBe` (Just . Definitely $ referenceDate)
             it "should parse %F %T" $
-              (parse "2016-05-03 00:00:00" :: Maybe (Parsed LocalTime)) `shouldSatisfy` isJust
+              (parse "2016-05-03 00:00:00" :: Maybe (Parsed LocalTime)) `shouldBe` (Just . Definitely $ referenceDate)
             it "should parse %F %T %z %Z" $
-              (parse "2016-05-03 00:00:00 +0006 CST" :: Maybe (Parsed LocalTime)) `shouldSatisfy` isJust
+              (parse "2016-05-03 00:00:00 +0006 CST" :: Maybe (Parsed LocalTime)) `shouldBe` (Just . Definitely $ referenceDate)
             it "should parse '%d/%m/%Y'" $
-              (parse "03/05/2016" :: Maybe (Parsed LocalTime)) `shouldSatisfy` isJust
+              (parse "03/05/2016" :: Maybe (Parsed LocalTime)) `shouldBe` (Just . Definitely $ referenceDate)
 
             --   it "unixToUTC and utcToUnix are isomorphic" $ property $
   --     \utctm -> (unixToUTC . utcToUnix $ (utctm :: Data.Time.UTCTime) :: Data.Time.UTCTime) `shouldBe` (utctm :: Data.Time.UTCTime)

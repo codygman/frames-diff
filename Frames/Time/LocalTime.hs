@@ -7,7 +7,7 @@ module Frames.Time.LocalTime where
 import qualified Data.Text as T
 import Data.Thyme
 import Data.Thyme.Time.Core (fromGregorian, secondsToDiffTime)
-import Control.Monad (MonadPlus,msum)
+import Control.Monad (MonadPlus,msum,mzero)
 import Data.Text hiding (map)
 import Data.Maybe (fromMaybe)
 import System.Locale (defaultTimeLocale)
@@ -19,15 +19,16 @@ import qualified Data.Vector as VB
 import Frames.InCore
 
 
-parseLocalTime :: String -> String -> Maybe LocalTime
-parseLocalTime fmt str = parseTime defaultTimeLocale fmt str
+-- parseLocalTime :: String -> String -> Maybe LocalTime
+parseLocalTime fmt str = case parseTime defaultTimeLocale fmt str of
+                           Just t -> pure t
+                           Nothing -> mzero
 
-parseLocalTimeDef fmt str = fromMaybe zeroLocalTm (parseLocalTime fmt str)
-
+-- parseLocalTimeDef fmt str = fromMaybe zeroLocalTm (parseLocalTime fmt str)
 zeroLocalTm = LocalTime (fromGregorian 0 0 0) (TimeOfDay 0 0 (secondsToDiffTime 0))
 
 fuzzyParseLocalTime :: MonadPlus m => Text -> m LocalTime
-fuzzyParseLocalTime txt = msum (map (\ d -> pure $ parseLocalTimeDef d (T.unpack txt)) formats)
+fuzzyParseLocalTime txt = msum (map (\ d -> parseLocalTime d (T.unpack txt)) formats)
 
 formats :: [String]
 formats = [ "%F %T"
