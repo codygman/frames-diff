@@ -49,7 +49,7 @@ main = hspec $ do
       parseUTCTime "2017-01-06" `shouldSatisfy` isJust
     it "does not parse a date with no spaces" $
       parseUTCTime "20170106" `shouldSatisfy` isNothing
-  it "does not parse an empty string" $
+    it "does not parse an empty string" $
       parseUTCTime "" `shouldSatisfy` isNothing
 
 
