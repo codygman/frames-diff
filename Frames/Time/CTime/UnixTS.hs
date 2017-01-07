@@ -123,9 +123,9 @@ daysAgoUTCTm now n = UnixTS $ (utcToUnix now :: UnixTime) `addUnixDiffTime` days
       -- TODO use parseUnixTime here... but it needs to be more restrictive than accepting "000000","", or "0" as a valid timestamp
       -- | T.length t >= 10 && T.length t <= 28 = msum $  (($ C8pack t) . parseUnixTime) <$> formats
       -- | T.length t >= 10 && T.length t <= 100 = parseUTCTime' t
-      -- our time text string is also required to have one or more dashes
+      -- our time text string is also required to have one or more dashes or forward-slashes
 parseUTCTime txt
-  | T.length txt >= 10 && T.length txt <= 100 && (isJust (T.find  (== '-') txt)) = msum (map (\ fmt -> pure . UnixTS . parseUnixTime fmt $ TE.encodeUtf8 txt) formats)
+  | T.length txt >= 9 && T.length txt <= 100 && (any isJust [(T.find  (== '-') txt), (T.find  (== '/') txt)]) = msum (map (\ fmt -> pure . UnixTS . parseUnixTime fmt $ TE.encodeUtf8 txt) formats)
   | otherwise = mzero
 
 instance Readable UnixTS  where
