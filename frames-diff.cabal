@@ -58,7 +58,12 @@ Test-Suite test-frames-diff
                  , thyme
                  , Frames
 
-
 source-repository head
   type:     git
   location: https://github.com/githubuser/frames-diff
+
+benchmark mainbench
+  type:             exitcode-stdio-1.0
+  main-is: Bench.hs
+  hs-source-dirs: bench, Frames
+  build-depends: base, criterion, Frames, frames-diff, text, thyme
