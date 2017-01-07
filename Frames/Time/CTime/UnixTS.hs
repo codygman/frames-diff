@@ -124,10 +124,15 @@ daysAgoUTCTm now n = UnixTS $ (utcToUnix now :: UnixTime) `addUnixDiffTime` days
       -- | T.length t >= 10 && T.length t <= 28 = msum $  (($ C8pack t) . parseUnixTime) <$> formats
       -- | T.length t >= 10 && T.length t <= 100 = parseUTCTime' t
       -- our time text string is also required to have one or more dashes or forward-slashes
--- TODO parseUnixTime doesn't actually work correctly with msum...
 parseUTCTime txt
-  | T.length txt >= 9 && T.length txt <= 100 && (any isJust [(T.find  (== '-') txt), (T.find  (== '/') txt)]) = msum (map (\ fmt -> pure . UnixTS . parseUnixTime fmt $ TE.encodeUtf8 txt) formats)
+  | T.length txt >= 9 && T.length txt <= 100 && (any isJust [(T.find  (== '-') txt), (T.find  (== '/') txt)]) = msum (map (\ fmt -> parseUnixTime' fmt $ TE.encodeUtf8 txt) formats)
   | otherwise = mzero
+
+
+parseUnixTime' fmt txt = case (utSeconds parsedTime) > 0 of
+                           True -> pure . UnixTS $ parsedTime
+                           False -> mzero
+  where parsedTime = (parseUnixTime fmt txt)
 
 instance Readable UnixTS  where
   fromText t = parseUTCTime t
