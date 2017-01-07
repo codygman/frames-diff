@@ -1,8 +1,11 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DeriveAnyClass #-}
 module Frames.Time.CTime.UnixTS ( MyColumns
                                  , Columns
                                  , Readable(..)
@@ -13,10 +16,11 @@ module Frames.Time.CTime.UnixTS ( MyColumns
                                  , utcToUnix
                                  , utcToUnixTS
                                  , parseUTCTime
-                                 , daysToUnixDiffTime
+                                 , daysAgo
+                                 , daysAhead
                                  , addUnixDiffTime
                                  , dt
-                                 , dtNDaysAgo
+                                 , daysAgo
   ) where
 
 import Foreign.C.Types
@@ -38,6 +42,9 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Char8 as C8
 import Frames.Default
 import Data.Maybe
+import Data.Time.LocalTime
+import Data.Hashable
+import GHC.Generics
 
 newtype UnixTS = UnixTS UnixTime
 -- TODO update to use unboxed vector if possible
@@ -73,13 +80,39 @@ dt :: Integer -> Int -> Int -> UnixTS
 dt y m d = utcToUnixTS (UTCTime day' (0 :: DiffTime))
   where day' = Data.Time.fromGregorian y m d
 
-daysToUnixDiffTime n = secondsToUnixDiffTime (n*60*60*24)
 
-dtNDaysAgo :: UnixTime -> Integer -> UnixTS
-dtNDaysAgo now n = UnixTS $ now `addUnixDiffTime` daysToUnixDiffTime n
+getUnixTimeSOD = utcToUnix . zeroZonedTOD <$> Data.Time.getZonedTime
+-- exmaple use/proof it works
+-- λ> getZonedTime
+-- 2017-01-06 19:15:05.120655981 CST
+-- λ> tz <- getCurrentTimeZone
+-- λ> utcToZonedTime tz . unixToUTC <$> getUnixTimeSOD
+-- 2017-01-06 00:00:00 CST
+-- λ> getZonedTime
+-- 2017-01-06 19:15:21.050065071 CST
 
-dtNDaysAgo' :: UTCTime -> Integer -> UnixTS
-dtNDaysAgo' now n = UnixTS $ (utcToUnix now :: UnixTime) `addUnixDiffTime` daysToUnixDiffTime n
+zeroZonedTOD :: Data.Time.ZonedTime -> Data.Time.UTCTime
+zeroZonedTOD (Data.Time.ZonedTime (Data.Time.LocalTime ld _) tz) = Data.Time.zonedTimeToUTC $ Data.Time.ZonedTime (Data.Time.LocalTime ld (TimeOfDay 0 0 0)) tz
+
+deriving instance Hashable UnixTS
+deriving instance Generic UnixTS
+deriving instance Generic UnixTime
+deriving instance Hashable UnixTime
+deriving instance Generic CTime
+deriving instance Hashable CTime
+
+daysAgo' n = secondsToUnixDiffTime (- n*60*60*24)
+daysAhead' n = secondsToUnixDiffTime (n*60*60*24)
+
+daysAgo :: UnixTime -> Integer -> UnixTS
+daysAgo now n = UnixTS $ now `addUnixDiffTime` daysAgo' n
+
+daysAhead :: UnixTime -> Integer -> UnixTS
+daysAhead now n = UnixTS $ now `addUnixDiffTime` daysAhead' n
+
+
+daysAgoUTCTm :: UTCTime -> Integer -> UnixTS
+daysAgoUTCTm now n = UnixTS $ (utcToUnix now :: UnixTime) `addUnixDiffTime` daysAgo' n
 
  -- we'll only consider trying to parse date strings from text from:
       -- 1997-07-16                        -- min: 10 characters
