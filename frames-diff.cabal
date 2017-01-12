@@ -55,7 +55,20 @@ Test-Suite test-frames-diff
                  , hspec-expectations
                  , quickcheck-instances >= 0.3.12
                  , time
+                 , Frames
+                 , text
+                 , pipes
+                 , vinyl
                  , unix-time
+
+benchmark simplebench
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   Frames benchmarks
+  main-is:          Bench.hs
+  build-depends:    base, deepseq, ghc-prim,
+                    criterion, containers, unordered-containers,
+                    pipes, Frames, text, frames-diff
+  ghc-options:      -O2
 
 source-repository head
   type:     git
