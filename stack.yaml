@@ -8,4 +8,4 @@ packages:
   extra-dep: true
 extra-deps:
 - tz-0.1.2.0
-resolver: lts-7.13
+resolver: lts-7.15
