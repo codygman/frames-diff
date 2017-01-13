@@ -62,20 +62,7 @@ userId = rlens (Proxy :: Proxy UserId)
 
 main :: IO ()
 main = do
-  let customers :: [Customer]
-      customers = [ 1 &: "Alfreds Futterkiste"                &: "Maria Anders"   &: "Obere Strr. 57"                &: "Berlin"      &: 12209 &: "Germany" &: Nil
-                  , 2 &: "Ana Trujillo Emparedados y helados" &: "Ana Trujillo"   &: "Avda. de la Constitución 2222" &: "México D.F." &: 05021 &: "Mexico"  &: Nil
-                  , 3 &: "Antonio Moreno Taquería"            &: "Antonio Moreno" &: "Mataderos 2312"                &: "México D.F." &: 05023 &: "Mexico"  &: Nil
-                  ]
-      orders :: [Order]
-      orders = [ 10308 &: 2 &: 7 &: "1996-09-18" &: 3 &: Nil
-               , 10309 &: 3 &: 3 &: "1996-09-19" &: 1 &: Nil
-               , 10310 &: 77 &: 8 &: "1996-09-20" &: 2 &: Nil
-               ]
-      orders' :: [Order]
-      orders' = [ 10308 &: 2 &: 7 &: "1996-09-18" &: 3 &: Nil ]
-
-      simple1 :: [Simple1]
+  let simple1 :: [Simple1]
       simple1 = [ 0 &: 100 &: Nil
                 , 1 &: 100 &: Nil
                 , 2 &: 100 &: Nil
@@ -84,13 +71,8 @@ main = do
       simple2 :: [Simple2]
       simple2 = [ 100 &: "usless" &: Nil]
 
-  joinedCustomersLeft3 <- F.toList <$> innerJoin (P.each customers) customerId (P.each orders) customerId
-  joinedOrdersLeft3    <- F.toList <$> innerJoin (P.each orders) customerId (P.each customers) customerId
-
-  joinedCustomersLeft1 <- F.toList <$> innerJoin (P.each customers) customerId (P.each orders') customerId
-  joinedOrdersLeft1    <- F.toList <$> innerJoin (P.each orders') customerId (P.each customers) customerId
-
-  joinedSimple         <- F.toList <$> innerJoin' (P.each simple1) userId (P.each simple2) userId
+  joinedSimple         <- F.toList <$> innerJoin (P.each simple1) userId (P.each simple2) userId
+  joinedSimpleFlipped         <- F.toList <$> innerJoin (P.each simple2) userId (P.each simple1) userId
 
 
   hspec $ do
@@ -128,16 +110,11 @@ sqlite> select * from simple1 inner join simple2 on simple1.uid = simple2.uid;
 1|100|100|useless
 2|100|100|useless
 3|100|100|useless
+sqlite> select * from simple2 inner join simple1 on simple2.uid = simple1.uid;
+100|useless|1|100
+100|useless|2|100
+100|useless|3|100
 -}
-        it "gives correct result regardless of left/right tables with 3 customers rows and 3 orders" $ do
-          joinedCustomersLeft1 `shouldBe`
-            [ 2 &: "Ana Trujillo Emparedados y helados" &: "Ana Trujillo"   &: "Avda. de la Constitución 2222" &: "México D.F." &: 05021 &: "Mexico" &: 10308 &: 2 &: 7 &: "1996-09-18"  &: 3 &: Nil
-            ]
-        it "gives correct result regardless of left/right tables with 3 customers rows and 1 order" $ do
-          joinedOrdersLeft1 `shouldBe`
-            [ 10308 &: 2  &: 7 &: "1996-09-18" &: 3 &: 2 &: "Ana Trujillo Emparedados y helados" &: "Ana Trujillo"   &: "Avda. de la Constitución 2222" &: "México D.F." &: 05021 &: "Mexico" &: Nil
-            ]
-
         it "gives multiple results back when one table contains only one row and there are multiple matches" $ do
           joinedSimple `shouldBe`
             [ 0 &: 100 &: 100 &: "usless" &: Nil
@@ -145,10 +122,14 @@ sqlite> select * from simple1 inner join simple2 on simple1.uid = simple2.uid;
             , 2 &: 100 &: 100 &: "usless" &: Nil
             , 3 &: 100 &: 100 &: "usless" &: Nil
             ]
-
-
-
-
+        -- TOOD this matches what sqlite does, but it could cause complications for callers who expect a specific "type" (or in vinyl's case collection of coolumns in a certain order)
+        it "sadly it has a flipped type when you reorder arguments" $ do
+          joinedSimpleFlipped `shouldBe`
+            [ 100 &: "usless" &: 0 &: 100 &: Nil
+            , 100 &: "usless" &: 1 &: 100 &: Nil
+            , 100 &: "usless" &: 2 &: 100 &: Nil
+            , 100 &: "usless" &: 3 &: 100 &: Nil
+            ]
 
 
 -- TODO
@@ -165,6 +146,7 @@ sqlite> select * from simple1 inner join simple2 on simple1.uid = simple2.uid;
 
 -- singB = head . F.toList <$> inCoreAoS bs
 
+-- TODO complete these northwind tests/examples
 -- northwind data sample
 {-
 =============================================== Customers ===============================================
@@ -182,4 +164,33 @@ OrderID |  CustomerID |  EmployeeID |  OrderDate  |  ShipperID
 =========================================================================================================
 
 -}
+
+
+  -- let customers :: [Customer]
+  --     customers = [ 1 &: "Alfreds Futterkiste"                &: "Maria Anders"   &: "Obere Strr. 57"                &: "Berlin"      &: 12209 &: "Germany" &: Nil
+  --                 , 2 &: "Ana Trujillo Emparedados y helados" &: "Ana Trujillo"   &: "Avda. de la Constitución 2222" &: "México D.F." &: 05021 &: "Mexico"  &: Nil
+  --                 , 3 &: "Antonio Moreno Taquería"            &: "Antonio Moreno" &: "Mataderos 2312"                &: "México D.F." &: 05023 &: "Mexico"  &: Nil
+  --                 ]
+  --     orders :: [Order]
+  --     orders = [ 10308 &: 2 &: 7 &: "1996-09-18" &: 3 &: Nil
+  --              , 10309 &: 3 &: 3 &: "1996-09-19" &: 1 &: Nil
+  --              , 10310 &: 77 &: 8 &: "1996-09-20" &: 2 &: Nil
+  --              ]
+  --     orders' :: [Order]
+  --     orders' = [ 10308 &: 2 &: 7 &: "1996-09-18" &: 3 &: Nil ]
+
+-- it "gives correct result regardless of left/right tables with 3 customers rows and 3 orders" $ do
+        --   joinedCustomersLeft1 `shouldBe`
+        --     [ 2 &: "Ana Trujillo Emparedados y helados" &: "Ana Trujillo"   &: "Avda. de la Constitución 2222" &: "México D.F." &: 05021 &: "Mexico" &: 10308 &: 2 &: 7 &: "1996-09-18"  &: 3 &: Nil
+        --     ]
+        -- it "gives correct result regardless of left/right tables with 3 customers rows and 1 order" $ do
+        --   joinedOrdersLeft1 `shouldBe`
+        --     [ 10308 &: 2  &: 7 &: "1996-09-18" &: 3 &: 2 &: "Ana Trujillo Emparedados y helados" &: "Ana Trujillo"   &: "Avda. de la Constitución 2222" &: "México D.F." &: 05021 &: "Mexico" &: Nil
+        --     ]
+
+  -- joinedCustomersLeft3 <- F.toList <$> innerJoin (P.each customers) customerId (P.each orders) customerId
+  -- joinedOrdersLeft3    <- F.toList <$> innerJoin (P.each orders) customerId (P.each customers) customerId
+
+  -- joinedCustomersLeft1 <- F.toList <$> innerJoin (P.each customers) customerId (P.each orders') customerId
+  -- joinedOrdersLeft1    <- F.toList <$> innerJoin (P.each orders') customerId (P.each customers) customerId
 
